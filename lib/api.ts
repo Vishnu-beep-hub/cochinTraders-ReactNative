@@ -1,4 +1,4 @@
-const baseUrl = process.env.BASE_URL || 'https://cochintraders.loca.lt/api';
+const baseUrl = process.env.BASE_URL || 'https://christa-unbeset-nondeafeningly.ngrok-free.dev/api';
  
 const ADMIN_PIN = process.env.ADMIN_PIN || '3133';
 

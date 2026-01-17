@@ -4,7 +4,6 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import CompanySelector from '../../components/CompanySelector';
@@ -23,7 +22,7 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: '#fff',
         tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
-        tabBarStyle: { backgroundColor: Colors[colorScheme ?? 'light'].navBar },
+        tabBarStyle: { backgroundColor: Colors[colorScheme ?? 'light'].navBar, paddingBottom: 12 },
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
         headerShown: true,
