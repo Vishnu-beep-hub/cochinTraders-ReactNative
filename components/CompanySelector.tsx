@@ -12,14 +12,14 @@ export default function CompanySelector() {
   const subColor = useThemeColor({ light: '#666', dark: '#aaa' }, 'text');
 
   useEffect(() => {
-    console.log('CompanySelector - selected:', selected);
-    console.log('CompanySelector - companies:', companies);
+    // console.log('CompanySelector - selected:', selected);
+    // console.log('CompanySelector - companies:', companies);
   }, [selected, companies]);
 
   return (
     <React.Fragment>
       <TouchableOpacity onPress={() => { refresh(); setOpen(true); }} style={styles.button}>
-        <Text style={styles.text}>{selected || 'Select Company'}</Text>
+        <Text style={styles.text} numberOfLines={1} ellipsizeMode="clip">{selected || 'Select Company'}</Text>
       </TouchableOpacity>
       <Modal visible={open} transparent animationType="fade">
         <DefaultView style={styles.modalBackdrop}>
@@ -33,7 +33,7 @@ export default function CompanySelector() {
                     onPress={() => { setSelected(item.companyName); setOpen(false); }} 
                     style={[styles.item]}
                 >
-                  <Text style={styles.itemText}>{item.companyName}</Text>
+                  <Text style={styles.itemText} numberOfLines={1} ellipsizeMode="tail">{item.companyName}</Text>
                   {item.lastSyncedAt ? <Text style={[styles.itemSub, { color: subColor }]}>{new Date(item.lastSyncedAt).toLocaleString()}</Text> : null}
                 </Pressable>
               )}
@@ -49,8 +49,8 @@ export default function CompanySelector() {
 }
 
 const styles = StyleSheet.create({
-  button: { paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  text: { color: '#fff', fontWeight: '600', fontSize: 14 },
+  button: { paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, justifyContent: 'center', alignItems: 'center', maxWidth: 100, overflow: 'hidden' },
+  text: { color: '#fff', fontWeight: '600', fontSize: 14, maxWidth: 100 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { width: '90%', maxHeight: '70%', padding: 12, borderRadius: 12 },
   modalTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },

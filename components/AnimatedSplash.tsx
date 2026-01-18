@@ -1,9 +1,9 @@
 // AnimatedSplash.tsx
-import Colors from '@/constants/Colors';
-import { useTheme } from '@/context/ThemeContext';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import Colors from "@/constants/Colors";
+import { useTheme } from "@/context/ThemeContext";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useRef } from "react";
+import { Animated, StyleSheet, View } from "react-native";
 
 export default function AnimatedSplash() {
   const { theme } = useTheme();
@@ -55,7 +55,7 @@ export default function AnimatedSplash() {
           duration: 600,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     bounceAnimation.start();
 
@@ -87,14 +87,18 @@ export default function AnimatedSplash() {
       pointerEvents="auto"
     >
       <LinearGradient
-        colors={theme === 'dark' ? ['#780206', '#061161'] : ['#4e54c8', '#8f94fb']}
+        colors={
+          theme === "dark" ? ["#780206", "#061161"] : ["#4e54c8", "#8f94fb"]
+        }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <Animated.View style={[styles.content, { opacity, transform: [{ scale }] }]}>
+      <Animated.View
+        style={[styles.content, { opacity, transform: [{ scale }] }]}
+      >
         <Animated.Image
-          source={require('../assets/images/splash-icon.png')}
+          source={require("../assets/images/splash-icon.png")}
           style={[styles.logo, { transform: [{ translateY: iconBounce }] }]}
           resizeMode="contain"
         />
@@ -103,7 +107,7 @@ export default function AnimatedSplash() {
             styles.companyName,
             {
               color: colors.text,
-              fontStyle: 'italic',
+              fontStyle: "italic",
               opacity: nameOpacity,
               transform: [{ scale: nameScale }],
             },
@@ -117,8 +121,8 @@ export default function AnimatedSplash() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  content: { justifyContent: "center", alignItems: "center" },
   logo: { width: 80, height: 80, marginBottom: 16 },
-  companyName: { fontSize: 28, fontWeight: '700', marginTop: 12 },
+  companyName: { fontSize: 28, fontWeight: "700", marginTop: 12 },
 });

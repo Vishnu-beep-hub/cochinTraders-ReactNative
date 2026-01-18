@@ -88,7 +88,7 @@ export default function LedgersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingVertical: 8 },
+  container: { flex: 1, paddingVertical: 8, paddingHorizontal: 12 },
   searchBar: {
     margin: 16,
     padding: 12,
@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -123,6 +124,7 @@ const styles = StyleSheet.create({
   closingBalance: {
     fontSize: 16,
     fontWeight: '700',
+    textAlign: 'right',
   },
   cardDetails: {
     gap: 8,

@@ -1,3 +1,4 @@
+// api.ts
 const baseUrl =
   process.env.BASE_URL ||
   "https://christa-unbeset-nondeafeningly.ngrok-free.dev/api";
@@ -114,11 +115,33 @@ export async function submitOrder(
   return res.json();
 }
 
+// New: Punch In API - sends email to orders.cochintraders@outlook.com
+export async function submitPunchIn(payload: {
+  employeeName: string;
+  employeePhone: string;
+  companyName: string;
+  shopName: string;
+  amount: number;
+  location: string;
+  time: string;
+  date: string;
+}) {
+  const res = await fetch(`${baseUrl}/punch-in`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Punch in failed");
+  return res.json();
+}
+
 export async function postTraderActivity(payload: {
   type: string;
   shopName: string;
   amount: number;
-  location?: { lat: number; lng: number } | undefined;
+  location?: string | { lat: number; lng: number } | undefined;
   empId?: string;
   employeeName?: string;
   place?: string;

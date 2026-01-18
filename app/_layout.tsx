@@ -1,19 +1,29 @@
-import AnimatedSplash from '@/components/AnimatedSplash';
-import ThemeToggle from '@/components/ThemeToggle';
-import Colors from '@/constants/Colors';
-import { CartProvider } from '@/context/CartContext';
-import { ThemeProvider as CustomThemeProvider, useTheme } from '@/context/ThemeContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { CompanyProvider } from '../context/CompanyContext';
+// _layout.tsx
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 
-export { ErrorBoundary } from 'expo-router';
+import AnimatedSplash from "@/components/AnimatedSplash";
+import ThemeToggle from "@/components/ThemeToggle";
+import Colors from "@/constants/Colors";
+import { CartProvider } from "@/context/CartContext";
+import { CompanyProvider } from "@/context/CompanyContext";
+import {
+  ThemeProvider as CustomThemeProvider,
+  useTheme,
+} from "@/context/ThemeContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+export { ErrorBoundary } from "expo-router";
+
+// Prevent native splash from auto-hiding
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  initialRouteName: "(tabs)",
 };
 
 const LightTheme = {
@@ -42,16 +52,24 @@ const AppDarkTheme = {
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
-  // if (!loaded) {
-  //   return null; // wait until fonts are ready
-  // }
+  useEffect(() => {
+    if (loaded) {
+      // Hide native splash as soon as fonts are loaded
+      // This allows AnimatedSplash to show immediately
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
+
+  if (!loaded) {
+    return null; // Native splash is still showing
+  }
 
   return (
     <CustomThemeProvider>
@@ -61,22 +79,64 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const router = useRouter();
   const [showSplash, setShowSplash] = useState(true);
+  const appState = useRef(AppState.currentState);
+  const splashTimerRef = useRef<number | null>(null);
+
+  const hideSplash = async () => {
+    try {
+      const employeeName = await AsyncStorage.getItem("employee_name");
+    } catch (e) {
+      console.log("Error reading AsyncStorage");
+    }
+    setShowSplash(false);
+  };
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      try {
-        const employeeName = await AsyncStorage.getItem('employee_name');
-        console.log('Employee found:', employeeName);
-      } catch (e) {
-        console.log('Error reading AsyncStorage');
-      }
-      setShowSplash(false); // hide custom splash
-    }, 2000);
+    // Show splash initially for 3 seconds
+    splashTimerRef.current = setTimeout(hideSplash, 3000) as unknown as number;
 
-    return () => clearTimeout(timer);
-  }, [router]);
+    // Listen for app state changes
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      // console.log(
+      //   "App state changed from",
+      //   appState.current,
+      //   "to",
+      //   nextAppState,
+      // );
+
+      // When app comes to foreground from background/inactive
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        console.log("App has come to the foreground - showing splash");
+
+        // Clear any existing timer
+        if (splashTimerRef.current !== null) {
+          clearTimeout(splashTimerRef.current);
+        }
+
+        // Show splash screen again
+        setShowSplash(true);
+
+        // Hide it after 3 seconds
+        splashTimerRef.current = setTimeout(
+          hideSplash,
+          3000,
+        ) as unknown as number;
+      }
+
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      if (splashTimerRef.current !== null) {
+        clearTimeout(splashTimerRef.current);
+      }
+      subscription.remove();
+    };
+  }, []);
 
   return <StackContent showSplash={showSplash} />;
 }
@@ -85,7 +145,7 @@ function StackContent({ showSplash }: { showSplash: boolean }) {
   const { theme } = useTheme();
 
   return (
-    <ThemeProvider value={theme === 'dark' ? AppDarkTheme : LightTheme}>
+    <ThemeProvider value={theme === "dark" ? AppDarkTheme : LightTheme}>
       {showSplash ? (
         <AnimatedSplash />
       ) : (
@@ -93,17 +153,17 @@ function StackContent({ showSplash }: { showSplash: boolean }) {
           <CartProvider>
             <Stack
               screenOptions={{
-                animation: 'fade',
+                animation: "fade",
                 headerStyle: { backgroundColor: Colors[theme].navBar },
-                headerTintColor: '#fff',
+                headerTintColor: "#fff",
                 headerRight: () => <ThemeToggle />,
               }}
             >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="cart" options={{ title: 'Cart' }} />
-              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="parties" options={{ title: 'Parties' }} />
-              <Stack.Screen name="ledgers" options={{ title: 'Ledgers' }} />
+              <Stack.Screen name="cart" options={{ title: "Cart" }} />
+              <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+              <Stack.Screen name="parties" options={{ title: "Parties" }} />
+              <Stack.Screen name="ledgers" options={{ title: "Ledgers" }} />
             </Stack>
           </CartProvider>
         </CompanyProvider>

@@ -22,28 +22,28 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     try {
       if (typeof localStorage !== 'undefined') {
         const raw = localStorage.getItem(STORAGE_KEY);
-        console.log('CompanyContext - loadFromStorage (web):', raw);
+        // console.log('CompanyContext - loadFromStorage (web):', raw);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) {
-            console.log('CompanyContext - loaded companies:', parsed);
+            // console.log('CompanyContext - loaded companies:', parsed);
             setCompanies(parsed);
             if (!selected && parsed.length > 0) {
-              console.log('CompanyContext - setting selected to:', parsed[0].companyName);
+              // console.log('CompanyContext - setting selected to:', parsed[0].companyName);
               setSelected(parsed[0].companyName);
             }
           }
         }
       } else {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        console.log('CompanyContext - loadFromStorage (native):', raw);
+        // console.log('CompanyContext - loadFromStorage (native):', raw);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) {
-            console.log('CompanyContext - loaded companies:', parsed);
+            // console.log('CompanyContext - loaded companies:', parsed);  
             setCompanies(parsed);
             if (!selected && parsed.length > 0) {
-              console.log('CompanyContext - setting selected to:', parsed[0].companyName);
+              // console.log('CompanyContext - setting selected to:', parsed[0].companyName);
               setSelected(parsed[0].companyName);
             }
           }
@@ -56,15 +56,15 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
 
   async function refresh() {
     try {
-      console.log('CompanyContext - refresh called');
+      // console.log('CompanyContext - refresh called');
       const res = await getCompanyNames();
-      console.log('CompanyContext - getCompanyNames response:', res);
+      // console.log('CompanyContext - getCompanyNames response:', res);
       if (res && res.data) {
         const list = res.data || [];
-        console.log('CompanyContext - setting companies:', list);
+        // console.log('CompanyContext - setting companies:', list);
         setCompanies(list);
         if (!selected && list && list.length > 0) {
-          console.log('CompanyContext - setting selected to:', list[0].companyName);
+          // console.log('CompanyContext - setting selected to:', list[0].companyName);
           setSelected(list[0].companyName);
         }
         // persist

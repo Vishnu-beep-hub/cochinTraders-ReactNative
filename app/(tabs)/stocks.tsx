@@ -47,9 +47,9 @@ export default function StocksScreen() {
 
     getStocksWithBatches(selected)
       .then((res: any) => {
-        console.log("Stocks API Response:", res);
+        // console.log("Stocks API Response:", res);
         const rows = res && res.data ? res.data : [];
-        console.log("Rows:", rows);
+        // console.log("Rows:", rows);
 
         const mapped = rows.map((s: any) => ({
           id: String(s.$Name || s.StockName || Math.random()),
@@ -61,7 +61,7 @@ export default function StocksScreen() {
           batches: s.batches || [],
           totalQuantity: s.totalQuantity || 0,
         }));
-        console.log("Mapped items:", mapped);
+        // console.log("Mapped items:", mapped);
         setItems(mapped);
         setLoading(false);
       })
@@ -105,8 +105,8 @@ export default function StocksScreen() {
     i.name.toLowerCase().includes(query.toLowerCase()),
   );
 
-  console.log("Filtered items:", filtered);
-  console.log("Total items:", items.length);
+  // console.log("Filtered items:", filtered);
+  // console.log("Total items:", items.length);
 
   return (
     <View style={styles.container}>
@@ -451,7 +451,7 @@ export default function StocksScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingVertical: 8 },
+  container: { flex: 1, paddingVertical: 8, paddingHorizontal: 12 },
   searchBar: {
     margin: 16,
     padding: 12,
@@ -465,6 +465,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
