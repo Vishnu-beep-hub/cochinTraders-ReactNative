@@ -4,8 +4,10 @@ import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useCompany } from '@/context/CompanyContext';
 import { getCompanyLedgers, getCompanyParties, getCompanyStocks } from '@/lib/api';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+// LinearGradient
 
 export default function ModalScreen() {
   const router = useRouter();
@@ -74,6 +76,24 @@ export default function ModalScreen() {
         ))}
       </View>
 
+      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+
+      <TouchableOpacity 
+        style={styles.batchCardContainer}
+        onPress={() => router.push('/batches')}
+      >
+        <LinearGradient
+          colors={['#780206', '#061161']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.batchCard}
+        >
+          <Text style={styles.batchCardIcon}>📦</Text>
+          <Text style={styles.batchCardTitle}>Create Batch</Text>
+          <Text style={styles.batchCardSubtitle}>Add new stock batch</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
       {/* Use a light status bar on iOS to account for the black space above the modal */}
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>
@@ -128,5 +148,35 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  batchCardContainer: {
+    width: '90%',
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  batchCard: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  batchCardIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  batchCardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  batchCardSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
 });

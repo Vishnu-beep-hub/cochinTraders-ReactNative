@@ -1,27 +1,20 @@
-// removed FontAwesome; using react-native-vector-icons directly for tabs
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-
 import AnimatedSplash from '@/components/AnimatedSplash';
 import ThemeToggle from '@/components/ThemeToggle';
 import Colors from '@/constants/Colors';
 import { CartProvider } from '@/context/CartContext';
 import { ThemeProvider as CustomThemeProvider, useTheme } from '@/context/ThemeContext';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { CompanyProvider } from '../context/CompanyContext';
 
-export {
-  ErrorBoundary
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
-SplashScreen.preventAutoHideAsync();
 
 const LightTheme = {
   ...DefaultTheme,
@@ -52,20 +45,13 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+  // if (!loaded) {
+  //   return null; // wait until fonts are ready
+  // }
 
   return (
     <CustomThemeProvider>
@@ -75,47 +61,53 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const router = useRouter();
   const [showSplash, setShowSplash] = useState(true);
-  
-  useEffect(() => {
-    let mounted = true;
-    const init = async () => {
-      // Cleanup legacy storage if needed
-      try {
-        await AsyncStorage.removeItem('admin_user');
-        await AsyncStorage.removeItem('auth_token');
-      } catch (e) {
-        // Ignore errors
-      }
-    };
-    init();
-    return () => { mounted = false; };
-  }, []);
 
-  return (
-    <StackContent showSplash={showSplash} onDone={() => setShowSplash(false)} />
-  );
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const employeeName = await AsyncStorage.getItem('employee_name');
+        console.log('Employee found:', employeeName);
+      } catch (e) {
+        console.log('Error reading AsyncStorage');
+      }
+      setShowSplash(false); // hide custom splash
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [router]);
+
+  return <StackContent showSplash={showSplash} />;
 }
 
-function StackContent({ showSplash, onDone }: { showSplash: boolean; onDone: () => void }) {
+function StackContent({ showSplash }: { showSplash: boolean }) {
   const { theme } = useTheme();
-  
+
   return (
     <ThemeProvider value={theme === 'dark' ? AppDarkTheme : LightTheme}>
-      {showSplash && <AnimatedSplash onDone={onDone} />}
-      <CompanyProvider>
-        <CartProvider>
-          <Stack screenOptions={{ 
-            animation: 'fade', 
-            headerStyle: { backgroundColor: Colors[theme].navBar }, 
-            headerTintColor: '#fff',
-            headerRight: () => <ThemeToggle />
-          }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="cart" options={{ title: 'Cart' }} />
-          </Stack>
-        </CartProvider>
-      </CompanyProvider>
+      {showSplash ? (
+        <AnimatedSplash />
+      ) : (
+        <CompanyProvider>
+          <CartProvider>
+            <Stack
+              screenOptions={{
+                animation: 'fade',
+                headerStyle: { backgroundColor: Colors[theme].navBar },
+                headerTintColor: '#fff',
+                headerRight: () => <ThemeToggle />,
+              }}
+            >
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="cart" options={{ title: 'Cart' }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="parties" options={{ title: 'Parties' }} />
+              <Stack.Screen name="ledgers" options={{ title: 'Ledgers' }} />
+            </Stack>
+          </CartProvider>
+        </CompanyProvider>
+      )}
     </ThemeProvider>
   );
 }

@@ -15,13 +15,18 @@ export default function PartiesScreen() {
     if (!selected) return;
     getCompanyParties(selected).then((res: any) => {
       const rows = res && res.data ? res.data : [];
-      const mapped = rows.map((s: any) => ({
-        name: s.$Name || s.Name || '',
-        parent: s.$Parent || s.Parent || s.$PartyParent || 'N/A',
-        primary: s.$Primary || s.Primary || 'N/A',
-        openingBalance: s.$OpeningBalance || s.OpeningBalance || 0,
-        closingBalance: s.$ClosingBalance || s.ClosingBalance || 0,
-      }));
+      const mapped = rows.map((s: any) => {
+        const addrRaw = s.$Address ?? s.Address ?? s.$ADDRESS;
+        const address = Array.isArray(addrRaw) ? addrRaw.filter(Boolean).join(', ') : String(addrRaw || '');
+        return {
+          name: s.$Name || s.Name || '',
+          parent: s.$Parent || s.Parent || s.$PartyParent || 'N/A',
+          primary: s.$_PrimaryGroup || s.PrimaryGroup || 'N/A',
+          openingBalance: s.$OpeningBalance || s.OpeningBalance || 0,
+          closingBalance: s.$ClosingBalance || s.ClosingBalance || 0,
+          address: s.$Address || s.Address || 'N/A',
+        };
+      });
       setItems(mapped);
     }).catch(() => {});
   }, [selected]);
@@ -60,6 +65,13 @@ export default function PartiesScreen() {
             </DefaultView>
             
             <DefaultView style={styles.cardDetails}>
+              <DefaultView style={styles.detailRow}>
+                <Text style={[styles.label, { color: borderColor }]}>Address:</Text>
+                <Text style={[styles.value, { color: textColor }]} numberOfLines={1}>
+                  {item.address}
+                </Text>
+              </DefaultView>
+              
               <DefaultView style={styles.detailRow}>
                 <Text style={[styles.label, { color: borderColor }]}>Parent:</Text>
                 <Text style={[styles.value, { color: textColor }]} numberOfLines={1}>

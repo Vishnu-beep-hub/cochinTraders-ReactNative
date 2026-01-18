@@ -19,7 +19,7 @@ export default function CompanySelector() {
   return (
     <React.Fragment>
       <TouchableOpacity onPress={() => { refresh(); setOpen(true); }} style={styles.button}>
-        <Text style={styles.button}>{selected || 'Select Company'}</Text>
+        <Text style={styles.text}>{selected || 'Select Company'}</Text>
       </TouchableOpacity>
       <Modal visible={open} transparent animationType="fade">
         <DefaultView style={styles.modalBackdrop}>
@@ -58,6 +58,6 @@ const styles = StyleSheet.create({
   itemText: { fontSize: 15 },
   itemSub: { fontSize: 12 },
   closeButton: { marginTop: 10, alignSelf: 'flex-end' },
-  closeText: {color: '#fff', fontSize: 14, fontWeight: '700', backgroundColor: '#2563eb', borderRadius: 16},
+  closeText: {color: '#fff', fontSize: 14, fontWeight: '700', backgroundColor: '#2563eb', borderRadius: 16, paddingRight: 12, paddingLeft: 12, paddingTop: 6, paddingBottom: 6 },
   companySelector: { fontSize: 14, fontWeight: '600' },
 });
