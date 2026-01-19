@@ -5,8 +5,8 @@ import ShopInput from "@/components/trader/ShopInput";
 import ShopSuggestions from "@/components/trader/ShopSuggestions";
 import { useCompany } from "@/context/CompanyContext";
 import { getCompanyParties, submitPunchIn } from "@/lib/api";
+import { getUserAddress } from "@/lib/getLocationAccess";
 import * as Location from "expo-location";
-import { LocationSubscription } from "expo-location";
 import React, { memo, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity } from "react-native";
 
@@ -24,7 +24,6 @@ export default memo(function PunchCard({
   const [amount, setAmount] = useState("");
   const [parties, setParties] = useState<{ name: string; closingBalance: number }[]>([]);
   const [showParties, setShowParties] = useState(false);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationName, setLocationName] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -33,6 +32,7 @@ export default memo(function PunchCard({
   const cardBg = useThemeColor({}, "card");
   const borderColor = useThemeColor({}, "tabIconDefault");
   const buttonPrimary = useThemeColor({}, "buttonPrimary");
+  const GEOAPIFY_API_KEY = (process.env.EXPO_PUBLIC_GEOAPIFY_API_KEY as string) || "";
   // const clearBg = useThemeColor({}, 'clearBg');
 
   // Fetch parties
@@ -61,223 +61,32 @@ export default memo(function PunchCard({
       });
   }, [companyName]);
 
-  // Fetch location with proper error handling
+
+  // Fetch location address via Geoapify
   useEffect(() => {
-    let subscription: LocationSubscription | null = null;
     let isMounted = true;
-
-    const getAddressFromCoords = async (lat: number, lon: number): Promise<string | null> => {
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
-          {
-            headers: {
-              "User-Agent": "CochinTradersApp",
-            },
-          },
-        );
-
-        if (!response.ok) {
-          console.warn("Nominatim API returned status:", response.status);
-          return null;
-        }
-
-        const data = await response.json();
-        const village =
-          data.address?.village ||
-          data.address?.city ||
-          data.address?.town ||
-          "";
-        const district =
-          data.address?.state_district || data.address?.county || "";
-
-        if (!village && !district) {
-          return null;
-        }
-
-        const locationName = [village, district].filter(Boolean).join(", ");
-        return locationName;
-      } catch (error) {
-        console.warn("Nominatim geocoding error:", error);
-        return null;
-      }
-    };
-
-    const updateLocation = async (lat: number, lng: number) => {
-      if (!isMounted) return;
-
-      console.log("📍 Updating location:", lat, lng);
-      setCoords({ lat, lng });
-      setLocationName("Fetching address...");
-
-      try {
-        let addressName: string | null = null;
-
-        // Try Nominatim first
-        try {
-          addressName = await getAddressFromCoords(lat, lng);
-          console.log("✅ Nominatim address:", addressName);
-        } catch (osmErr) {
-          console.error("❌ Nominatim failed:", osmErr);
-        }
-
-        // Fallback to Expo reverse geocode
-        if (!addressName && isMounted) {
-          try {
-            const address = await Location.reverseGeocodeAsync({
-              latitude: lat,
-              longitude: lng,
-            });
-            if (isMounted && address && address.length > 0) {
-              const a = address[0];
-              const parts = [
-                a.name !== a.street ? a.name : null,
-                a.street,
-                a.city || a.subregion,
-              ].filter((p): p is string => !!p && p.trim().length > 0);
-              const uniqueParts = [...new Set(parts)];
-              if (uniqueParts.length > 0) {
-                addressName = uniqueParts.join(", ");
-              }
-              console.log("✅ Expo address:", addressName);
-            }
-          } catch (nativeErr) {
-            console.warn("❌ Expo geocoding failed:", nativeErr);
-          }
-        }
-
-        if (isMounted) {
-          if (addressName) {
-            setLocationName(addressName);
-          } else {
-            // Fallback to coordinates
-            setLocationName(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-          }
-          setLocationLoading(false);
-        }
-      } catch (e) {
-        console.warn("❌ All geocoding failed:", e);
-        if (isMounted) {
-          setLocationName(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-          setLocationLoading(false);
-        }
-      }
-    };
-
-    (async () => {
-      try {
-        console.log("📍 Requesting location permissions...");
-        const { status: permissionStatus } =
-          await Location.requestForegroundPermissionsAsync();
-
-        console.log("📍 Permission status:", permissionStatus);
-
-        if (!isMounted || permissionStatus !== "granted") {
-          console.warn("❌ Location permission not granted");
-          setLocationName("Location permission denied");
-          setLocationLoading(false);
-          Alert.alert(
-            "Location Permission Required",
-            "Please enable location access in your device settings to use punch-in feature."
-          );
-          return;
-        }
-
-        const servicesEnabled = await Location.hasServicesEnabledAsync();
-        if (!servicesEnabled) {
-          console.warn("❌ Location services disabled");
-          setLocationName("Location services disabled");
-          setLocationLoading(false);
-          Alert.alert(
-            "Enable Location Services",
-            "Current location is unavailable. Please enable GPS/location services."
-          );
-          return;
-        }
-
-        console.log("📍 Getting initial location...");
-        try {
-          const loc = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          console.log("✅ Got location:", loc.coords.latitude, loc.coords.longitude);
-          if (isMounted) {
-            await updateLocation(loc.coords.latitude, loc.coords.longitude);
-          }
-        } catch (locError) {
-          console.warn("❌ Error getting initial location:", locError);
-          try {
-            const last = await Location.getLastKnownPositionAsync();
-            if (last && isMounted) {
-              console.log("✅ Using last known location:", last.coords.latitude, last.coords.longitude);
-              await updateLocation(last.coords.latitude, last.coords.longitude);
-            } else {
-              setLocationName("Location unavailable");
-              setLocationLoading(false);
-              Alert.alert(
-                "Location Unavailable",
-                "Current location is unavailable. Make sure that location services are enabled."
-              );
-              return;
-            }
-          } catch (lastErr) {
-            console.warn("❌ No last known location:", lastErr);
-            setLocationName("Location unavailable");
-            setLocationLoading(false);
-            Alert.alert(
-              "Location Unavailable",
-              "Current location is unavailable. Make sure that location services are enabled."
-            );
-            return;
-          }
-        }
-
+    setLocationLoading(true);
+    console.log("📍 Using Geoapify key?", Boolean(GEOAPIFY_API_KEY));
+    getUserAddress(GEOAPIFY_API_KEY)
+      .then((addr) => {
         if (!isMounted) return;
-
-        console.log("📍 Starting location watch...");
-        const sub = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.Balanced,
-            timeInterval: 10000, // Update every 10 seconds
-            distanceInterval: 10, // Or when moved 10 meters
-          },
-          (l) => {
-            console.log("📍 Location update:", l.coords.latitude, l.coords.longitude);
-            updateLocation(l.coords.latitude, l.coords.longitude);
-          },
-        );
-
-        if (!isMounted) {
-          sub.remove();
-        } else {
-          subscription = sub;
-        }
-      } catch (error) {
-        console.warn("❌ Location setup error:", error);
-        if (isMounted) {
-          setLocationName("Location unavailable");
-          setLocationLoading(false);
-        }
-      }
-    })();
+        console.log("📍 Geoapify address:", addr);
+        setLocationName(addr || null);
+        setLocationLoading(false);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        console.warn("❌ Geoapify address fetch failed");
+        setLocationName(null);
+        setLocationLoading(false);
+      });
 
     return () => {
-      console.log("🧹 Cleaning up location subscription");
       isMounted = false;
-      if (subscription) {
-        try {
-          subscription.remove();
-        } catch (e) {
-          console.error("Error removing subscription:", e);
-        }
-      }
     };
   }, []);
 
-  const locText = locationLoading
-    ? "Loading location..."
-    : locationName ||
-      (coords?.lat ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` : "Location unavailable");
+  const locText = locationLoading ? "Loading location..." : (locationName || "Location unavailable");
 
   const handlePress = async () => {
     if (submitting) return;

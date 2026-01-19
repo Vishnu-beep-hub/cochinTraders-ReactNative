@@ -87,18 +87,14 @@ export default function AnimatedSplash() {
       pointerEvents="auto"
     >
       <LinearGradient
-        colors={
-          theme === "dark" ? ["#780206", "#061161"] : ["#4e54c8", "#8f94fb"]
-        }
+        colors={theme === "dark" ? ["#780206", "#061161"] : ["#4e54c8", "#8f94fb"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <Animated.View
-        style={[styles.content, { opacity, transform: [{ scale }] }]}
-      >
+      <Animated.View style={[styles.content, { opacity, transform: [{ scale }] }]}>
         <Animated.Image
-          source={require("@/assets/images/splash-icon.png")}
+          source={require("@/assets/images/adaptive-icon.png")}
           style={[styles.logo, { transform: [{ translateY: iconBounce }] }]}
           resizeMode="contain"
         />
