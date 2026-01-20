@@ -39,11 +39,7 @@ export async function getTraderReceivables() {
 
 // New: Tally API helpers
 export async function getCompanyNames() {
-  try {
-    return await getJson("/company-names");
-  } catch {
-    return { data: [] };
-  }
+  return getJson("/company-names");
 }
 
 export async function getCompanyParties(companyName: string) {

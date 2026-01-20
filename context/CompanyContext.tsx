@@ -1,6 +1,7 @@
 import { getCompanyNames } from '@/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Alert, BackHandler, Platform } from 'react-native';
 
 type Company = { companyName: string; lastSyncedAt?: string | null };
 
@@ -78,6 +79,11 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e) {
       console.error('CompanyContext - refresh error:', e);
+      const msg = String((e as any)?.message || e);
+      if (msg.includes('API error: 404')) {
+        Alert.alert('Error', 'Company names not found (404). Closing app.');
+        if (Platform.OS !== 'web') BackHandler.exitApp();
+      }
     }
   }
 
