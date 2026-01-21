@@ -1,4 +1,5 @@
 import CompanySelector from '@/components/CompanySelector';
+import ErrorModal from '@/components/ErrorModal';
 import { SkeletonCardItem } from '@/components/Skeleton';
 import { Text, TextInput, View, useThemeColor } from '@/components/Themed';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -13,6 +14,7 @@ export default function OutstandingScreen() {
   const [query, setQuery] = useState('');
   const { selected } = useCompany();
   const [loading, setLoading] = useState(false);
+  const [errorCode, setErrorCode] = useState<number | null>(null);
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'tabIconDefault');
   const cardBg = useThemeColor({}, 'card');
@@ -42,7 +44,12 @@ export default function OutstandingScreen() {
           });
         setReceivables(debtors);
       })
-      .catch(() => setReceivables([]))
+      .catch((err) => {
+        const msg = String(err?.message || err);
+        const code = typeof (err as any)?.status === 'number' ? (err as any).status : (msg.match(/(\d{3})/) ? Number(msg.match(/(\d{3})/)![1]) : null);
+        if (code) setErrorCode(code);
+        setReceivables([]);
+      })
       .finally(() => setLoading(false));
   }, [selected]);
 
@@ -50,6 +57,7 @@ export default function OutstandingScreen() {
 
   return (
     <View style={styles.container}>
+      <ErrorModal visible={!!errorCode} status={errorCode ?? undefined} onClose={() => setErrorCode(null)} onRetry={() => { setErrorCode(null); setLoading(true); getCompanyParties(selected as string).then((res: any) => { const rows = res && res.data ? res.data : []; const debtors = (rows || []).filter((r: any) => { const grp = r.$_PrimaryGroup || r._PrimaryGroup || r.PrimaryGroup || ''; return String(grp).toLowerCase().includes('sundry debtors'); }).map((p: any) => { const addrRaw = p.$Address ?? p.Address ?? p.$ADDRESS; const address = Array.isArray(addrRaw) ? addrRaw.filter(Boolean).join(', ') : String(addrRaw || ''); return { id: String(p.$Name || p.MailingName || p.Name || Math.random()), name: p.$Name || p.MailingName || p.Name || '', closingBalance: Number(p.$ClosingBalance ?? p.ClosingBalance ?? p.Balance ?? 0) || 0, openingBalance: Number(p.$OpeningBalance ?? p.OpeningBalance ?? 0) || 0, address, parent: p.$Parent || p.Parent || 'N/A', }; }); setReceivables(debtors); }).catch(() => setReceivables([])).finally(() => setLoading(false)); }} />
       <Stack.Screen options={{
         title: 'Outstanding',
         headerRight: () => (

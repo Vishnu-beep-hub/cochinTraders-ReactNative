@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View as DefaultView, Dimensions, FlatList, Modal, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
 import { useCompany } from '../context/CompanyContext';
+import ErrorModal from './ErrorModal';
 import { Text, View, useThemeColor } from './Themed';
 
 export default function CompanySelector() {
-  const { companies, selected, setSelected, refresh } = useCompany();
+  const { companies, selected, setSelected, refresh, errorStatus, clearError } = useCompany();
   const [open, setOpen] = useState(false);
   const SCREEN_WIDTH = Dimensions.get('window').width;
   
@@ -14,6 +15,7 @@ export default function CompanySelector() {
 
   return (
     <React.Fragment>
+      <ErrorModal visible={!!errorStatus} status={errorStatus ?? undefined} onClose={clearError || (() => {})} onRetry={() => { if (clearError) clearError(); refresh(); }} />
       <TouchableOpacity onPress={() => { refresh(); setOpen(true); }} style={[styles.button, { maxWidth: SCREEN_WIDTH * 0.3 }]}>
         <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>{selected || 'Select Company'}</Text>
       </TouchableOpacity>
@@ -40,6 +42,7 @@ export default function CompanySelector() {
           </View>
         </DefaultView>
       </Modal>
+      <ErrorModal visible={!!errorStatus} status={errorStatus ?? undefined} onClose={clearError} />
     </React.Fragment>
   );
 }

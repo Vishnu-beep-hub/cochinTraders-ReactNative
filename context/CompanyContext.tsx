@@ -1,7 +1,6 @@
 import { getCompanyNames } from '@/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Alert, BackHandler, Platform } from 'react-native';
 
 type Company = { companyName: string; lastSyncedAt?: string | null };
 
@@ -10,6 +9,8 @@ type CompanyContextType = {
   selected: string | null;
   setSelected: (name: string | null) => void;
   refresh: () => Promise<void>;
+  errorStatus?: number | null;
+  clearError?: () => void;
 };
 
 const CompanyContext = createContext<CompanyContextType | null>(null);
@@ -17,7 +18,7 @@ const CompanyContext = createContext<CompanyContextType | null>(null);
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
-  const [shown404, setShown404] = useState(false);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const STORAGE_KEY = 'cochin_companies_v1';
 
   async function loadFromStorage() {
@@ -81,27 +82,18 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.error('CompanyContext - refresh error:', e);
       const msg = String((e as any)?.message || e);
-      if (msg.includes('API error: 404')) {
-        if (!shown404) {
-          setShown404(true);
-          Alert.alert(
-            'Company Not Found',
-            'Company names API returned 404.',
-            [
-              { text: 'Retry', onPress: () => { setShown404(false); refresh(); } },
-              { text: 'Exit', style: 'destructive', onPress: () => { if (Platform.OS !== 'web') BackHandler.exitApp(); } },
-            ],
-            { cancelable: false }
-          );
-        }
-      }
+      const match = msg.match(/API error:\s*(\d+)/);
+      const code = match ? Number(match[1]) : null;
+      setErrorStatus(code);
     }
   }
 
   useEffect(() => { loadFromStorage(); refresh(); }, []);
 
+  function clearError() { setErrorStatus(null); }
+
   return (
-    <CompanyContext.Provider value={{ companies, selected, setSelected, refresh }}>
+    <CompanyContext.Provider value={{ companies, selected, setSelected, refresh, errorStatus, clearError }}>
       {children}
     </CompanyContext.Provider>
   );

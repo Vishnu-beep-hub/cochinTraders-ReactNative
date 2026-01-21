@@ -22,7 +22,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export { ErrorBoundary } from "expo-router";
 
 // Prevent native splash from auto-hiding
-SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -62,16 +61,16 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
+  useEffect(() => {
     if (loaded) {
       // Hide native splash as soon as fonts are loaded
       // This allows AnimatedSplash to show immediately
       SplashScreen.hideAsync();
     }
   }, [loaded]);
-
-  if (!loaded) {
-    return null; // Native splash is still showing
-  }
 
   return (
     <CustomThemeProvider>
@@ -98,45 +97,10 @@ function RootLayoutNav() {
     // Show splash initially for 3 seconds
     splashTimerRef.current = setTimeout(hideSplash, 3000) as unknown as number;
 
-    // Listen for app state changes
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      // console.log(
-      //   "App state changed from",
-      //   appState.current,
-      //   "to",
-      //   nextAppState,
-      // );
-
-      // When app comes to foreground from background/inactive
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === "active"
-      ) {
-        console.log("App has come to the foreground - showing splash");
-
-        // Clear any existing timer
-        if (splashTimerRef.current !== null) {
-          clearTimeout(splashTimerRef.current);
-        }
-
-        // Show splash screen again
-        setShowSplash(true);
-
-        // Hide it after 3 seconds
-        splashTimerRef.current = setTimeout(
-          hideSplash,
-          3000,
-        ) as unknown as number;
-      }
-
-      appState.current = nextAppState;
-    });
-
     return () => {
       if (splashTimerRef.current !== null) {
         clearTimeout(splashTimerRef.current);
       }
-      subscription.remove();
     };
   }, []);
 

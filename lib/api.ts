@@ -17,7 +17,11 @@ async function getJson(path: string) {
     });
     clearTimeout(timeoutId);
 
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    if (!res.ok) {
+      const err: any = new Error(`API error: ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     const ct = res.headers.get("content-type") || "";
     if (!ct.toLowerCase().includes("application/json")) {
       const text = await res.text();
@@ -33,7 +37,7 @@ async function getJson(path: string) {
 }
 
 export async function getTraderStocks(query?: string) {
-  const q = query ? `?q=${encodeURIComponent(query)}` : "";
+  const q = query ? `?q=${query}` : "";
   return getJson(`/trader/stocks${q}`);
 }
 
@@ -47,19 +51,19 @@ export async function getCompanyNames() {
 }
 
 export async function getCompanyParties(companyName: string) {
-  return getJson(`/parties/${encodeURIComponent(companyName)}`);
+  return getJson(`/parties/${companyName}`);
 }
 
 export async function getCompanyStocks(companyName: string) {
-  return getJson(`/stocks/${encodeURIComponent(companyName)}`);
+  return getJson(`/stocks/${companyName}`);
 }
 
 export async function getStocksWithBatches(companyName: string) {
-  return getJson(`/stocks-with-batch/${encodeURIComponent(companyName)}`);
+  return getJson(`/stocks-with-batch/${companyName}`);
 }
 
 export async function getCompanyLedgers(companyName: string) {
-  return getJson(`/ledgers/${encodeURIComponent(companyName)}`);
+  return getJson(`/ledgers/${companyName}`);
 }
 
 export async function createOrder(payload: {
@@ -73,7 +77,11 @@ export async function createOrder(payload: {
     },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Order failed");
+  if (!res.ok) {
+    const err: any = new Error("Order failed");
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -83,21 +91,22 @@ export async function submitOrderItem(
   shopName: string,
   pieces: Record<number, number>,
 ) {
-  const res = await fetch(
-    `${baseUrl}/orders/${encodeURIComponent(companyName)}/${encodeURIComponent(stockItem)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        shopName,
-        pieces,
-      }),
+  const res = await fetch(`${baseUrl}/orders/${companyName}/${stockItem}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
-  );
-  if (!res.ok) throw new Error("Failed to submit order item");
+    body: JSON.stringify({
+      shopName,
+      pieces,
+    }),
+  });
+  if (!res.ok) {
+    const err: any = new Error("Failed to submit order item");
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -111,18 +120,19 @@ export async function submitOrder(
     pieces: item.pieces,
   }));
 
-  const res = await fetch(
-    `${baseUrl}/orders/${encodeURIComponent(companyName)}/${encodeURIComponent(shopName)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(orderItems),
+  const res = await fetch(`${baseUrl}/orders/${companyName}/${shopName}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
-  );
-  if (!res.ok) throw new Error("Failed to submit order");
+    body: JSON.stringify(orderItems),
+  });
+  if (!res.ok) {
+    const err: any = new Error("Failed to submit order");
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -144,7 +154,11 @@ export async function submitPunchIn(payload: {
     },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Punch in failed");
+  if (!res.ok) {
+    const err: any = new Error("Punch in failed");
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -170,7 +184,11 @@ export async function postTraderActivity(payload: {
     },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Activity post failed");
+  if (!res.ok) {
+    const err: any = new Error("Activity post failed");
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -178,7 +196,7 @@ export async function sendCollection(payload: {
   shopName: string;
   amount: number;
   empId?: string;
-  location?: { lat: number; lng: number };
+  location?: string;
   employeeName?: string;
   companyName?: string;
 }) {
@@ -192,7 +210,11 @@ export async function sendCollection(payload: {
     },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Send collection failed");
+  if (!res.ok) {
+    const err: any = new Error("Send collection failed");
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -216,7 +238,11 @@ export async function createEmployeePublic(name: string, phone: string) {
     },
     body: JSON.stringify({ name, phone }),
   });
-  if (!res.ok) throw new Error("Create employee failed");
+  if (!res.ok) {
+    const err: any = new Error("Create employee failed");
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -232,16 +258,18 @@ export async function addBatches(payload: {
     },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Add batches failed");
+  if (!res.ok) {
+    const err: any = new Error("Add batches failed");
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
 export async function getBatches(companyName: string, stockItem: string) {
-  return getJson(
-    `/batches/${encodeURIComponent(companyName)}/${encodeURIComponent(stockItem)}`,
-  );
+  return getJson(`/batches/${companyName}/${stockItem}`);
 }
 
 export async function getStockBatches(companyName: string) {
-  return getJson(`/get-batches/${encodeURIComponent(companyName)}`);
+  return getJson(`/get-batches/${companyName}`);
 }

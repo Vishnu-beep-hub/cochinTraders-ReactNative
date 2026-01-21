@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 
+import ErrorModal from '@/components/ErrorModal';
 import { SkeletonCountCard } from '@/components/Skeleton';
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useCompany } from '@/context/CompanyContext';
@@ -19,6 +20,7 @@ export default function ModalScreen() {
     parties: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [errorCode, setErrorCode] = useState<number | null>(null);
 
   useEffect(() => {
     if (!selected) {
@@ -30,9 +32,9 @@ export default function ModalScreen() {
       try {
         setLoading(true);
         const [stocksRes, ledgersRes, partiesRes] = await Promise.all([
-          getCompanyStocks(selected).catch(() => ({ data: [] })),
-          getCompanyLedgers(selected).catch(() => ({ data: [] })),
-          getCompanyParties(selected).catch(() => ({ data: [] })),
+          getCompanyStocks(selected).catch((e) => { const code = (e as any)?.status; if (typeof code === 'number') setErrorCode(code); return { data: [] }; }),
+          getCompanyLedgers(selected).catch((e) => { const code = (e as any)?.status; if (typeof code === 'number') setErrorCode(code); return { data: [] }; }),
+          getCompanyParties(selected).catch((e) => { const code = (e as any)?.status; if (typeof code === 'number') setErrorCode(code); return { data: [] }; }),
         ]);
         
         setCounts({
@@ -62,6 +64,7 @@ export default function ModalScreen() {
 
   return (
     <View style={styles.container}>
+      <ErrorModal visible={!!errorCode} status={errorCode ?? undefined} onClose={() => setErrorCode(null)} onRetry={() => { setErrorCode(null); const fetchCounts = async () => { try { setLoading(true); const [stocksRes, ledgersRes, partiesRes] = await Promise.all([ getCompanyStocks(selected as string).catch((e) => { const code = (e as any)?.status; if (typeof code === 'number') setErrorCode(code); return { data: [] }; }), getCompanyLedgers(selected as string).catch((e) => { const code = (e as any)?.status; if (typeof code === 'number') setErrorCode(code); return { data: [] }; }), getCompanyParties(selected as string).catch((e) => { const code = (e as any)?.status; if (typeof code === 'number') setErrorCode(code); return { data: [] }; }), ]); setCounts({ stocks: stocksRes.data?.length || 0, ledgers: ledgersRes.data?.length || 0, parties: partiesRes.data?.length || 0, }); } catch (e) { } finally { setLoading(false); } }; fetchCounts(); }} />
       <Text style={styles.title}>Data Overview</Text>
       <Text style={[styles.subtitle, { color: subColor }]}>Active Company: {selected || 'None'}</Text>
       

@@ -1,11 +1,12 @@
 // components/trader/PunchCard.tsx
+import ErrorModal from "@/components/ErrorModal";
 import { SkeletonLine } from "@/components/Skeleton";
 import { Text, TextInput, View, useThemeColor } from "@/components/Themed";
 import PunchSuccessModal from "@/components/trader/PunchSuccessModal";
 import ShopInput from "@/components/trader/ShopInput";
 import ShopSuggestions from "@/components/trader/ShopSuggestions";
 import { useCompany } from "@/context/CompanyContext";
-import { getCompanyParties, submitPunchIn } from "@/lib/api";
+import { getCompanyParties, sendCollection } from "@/lib/api";
 import React, { memo, useEffect, useState } from "react";
 import { Alert, StyleSheet, TouchableOpacity } from "react-native";
 
@@ -30,6 +31,7 @@ export default memo(function PunchCard({ employeeName, employeePhone }: Props) {
     location?: string;
     time?: string;
   } | null>(null);
+  const [errorCode, setErrorCode] = useState<number | null>(null);
   const cardBg = useThemeColor({}, "card");
   const borderColor = useThemeColor({}, "tabIconDefault");
   const buttonPrimary = useThemeColor({}, "buttonPrimary");
@@ -86,39 +88,40 @@ export default memo(function PunchCard({ employeeName, employeePhone }: Props) {
 
     const now = new Date();
     const payload = {
-      employeeName: employeeName || "",
-      employeePhone: employeePhone || "",
-      companyName: companyName || "",
-      shopName,
+      shopName: shopName.trim(),
       amount: amt,
-      location: "_",
-      time: now.toLocaleTimeString(),
-      date: now.toLocaleDateString(),
+      empId: employeePhone ?? undefined,
+      employeeName: employeeName ?? undefined,
+      companyName: companyName ?? undefined,
+      location: "None",
     };
 
     try {
       setSubmitting(true);
       console.log("📤 Submitting punch in:", payload);
-      await submitPunchIn(payload);
+      await sendCollection(payload);
       console.log("✅ Punch in successful");
       setSuccessInfo({
-        shopName,
+        shopName: shopName.trim(),
         amount: amt,
-        location: "_",
-        time: payload.time,
+        time: now.toLocaleTimeString(),
       });
       setShowSuccess(true);
       setShopName("");
       setAmount("");
     } catch (error) {
       console.error("❌ Punch in error:", error);
-      Alert.alert("Error", "Failed to submit punch. Please try again.");
+      const msg = String((error as any)?.message || error);
+      const code = typeof (error as any)?.status === "number" ? (error as any).status : (msg.match(/(\d{3})/) ? Number(msg.match(/(\d{3})/)![1]) : null);
+      if (code) setErrorCode(code);
+      else Alert.alert("Error", "Failed to submit punch. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
   return (
     <React.Fragment>
+      <ErrorModal visible={!!errorCode} status={errorCode ?? undefined} onClose={() => setErrorCode(null)} onRetry={() => { setErrorCode(null); handlePress(); }} />
       <View style={[styles.card, { backgroundColor: cardBg }]}>
         <Text style={styles.title}>Punch In</Text>
 

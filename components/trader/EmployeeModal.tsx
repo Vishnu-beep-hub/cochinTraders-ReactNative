@@ -53,8 +53,8 @@ export default function EmployeeModal({ visible, name, phone, loading, onNameCha
               style={[styles.modalInput, { borderColor }]}
               editable={!loading}
             />
-            <TouchableOpacity style={[styles.modalButton, { opacity: loading ? 0.6 : 1 }]} onPress={onSave} disabled={!!loading}>
-              <Text style={styles.modalButtonText}>{loading ? 'Saving...' : 'Save'}</Text>
+            <TouchableOpacity style={[styles.modalButton, { opacity: loading ? 0.6 : 1, backgroundColor: buttonBg  }]} onPress={onSave} disabled={!!loading}>
+              <Text style={[styles.modalButtonText]}>{loading ? 'Saving...' : 'Save'}</Text>
             </TouchableOpacity>
           </DefaultView>
         </TouchableWithoutFeedback>

@@ -12,7 +12,7 @@ function TabBarIcon(props: {
   name: React.ComponentProps<typeof Icon>["name"];
   color: string;
 }) {
-  return <Icon size={28} style={{ marginBottom: -3 }} {...props} />;
+  return <Icon size={28} style={{ marginBottom: 0 }} {...props} />;
 }
 
 export default function TabLayout() {
@@ -27,10 +27,12 @@ export default function TabLayout() {
           tabBarShowLabel: true,
           tabBarStyle: {
             backgroundColor: Colors[colorScheme ?? "light"].navBar,
-            paddingBottom: 8,
-            paddingTop: 8,
-            // marginBottom: 12,
+            paddingBottom: 13,
+            paddingTop: 6,
+            height: 64,
           },
+          tabBarLabelStyle: { fontSize: 12, paddingBottom: 2 },
+          tabBarItemStyle: { paddingVertical: 6 },
           // Disable the static render of the header on web
           // to prevent a hydration error in React Navigation v6.
           headerShown: true,

@@ -1,4 +1,5 @@
 import CompanySelector from "@/components/CompanySelector";
+import ErrorModal from "@/components/ErrorModal";
 import { SkeletonCardItem } from "@/components/Skeleton";
 import BatchCartModal from "@/components/stocks/BatchCartModal";
 import { Text, TextInput, View, useThemeColor } from "@/components/Themed";
@@ -20,6 +21,7 @@ export default function StocksScreen() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<number | null>(null);
   const { selected } = useCompany();
   const router = useRouter();
   const textColor = useThemeColor({}, "text");
@@ -31,65 +33,65 @@ export default function StocksScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalItem, setModalItem] = useState<any | null>(null);
 
-  useEffect(() => {
+  const fetchStocksMain = async () => {
     if (!selected) {
       setError("No company selected");
       setItems([]);
       return;
     }
-
     setLoading(true);
     setError(null);
-
-    console.log("Fetching stocks for company:", selected);
-
-    getStocksWithBatches(selected)
-      .then((res: any) => {
-        const rows = res && res.data ? res.data : [];
-        const mapped = rows.map((s: any) => ({
-          id: String(s.$Name || s.StockName || Math.random()),
-          name: s.$Name || s.StockName || "",
-          closingQty: Number(s.$ClosingBalance ?? s.ClosingQty ?? 0) || 0,
-          openingQty: Number(s.$OpeningBalance ?? s.OpeningQty ?? 0) || 0,
-          parent: s.$Parent || s.Category || "N/A",
-          price: Number(s.$ClosingRate ?? s.ClosingRate ?? 0) || 0,
-          batches: s.batches || [],
-          totalQuantity: s.totalQuantity ?? (Number(s.ClosingQty ?? s.$ClosingBalance ?? 0) || 0),
-        }));
-        setItems(mapped);
-        setLoading(false);
-      })
-      .catch(async (err) => {
-        const msg = String(err?.message || err);
-        if (msg.includes("404")) {
-          try {
-            const res = await getCompanyStocks(selected);
-            const rows = res && res.data ? res.data : [];
-            const fallbackMapped = rows.map((s: any) => ({
-              id: String(s.$Name || s.StockName || Math.random()),
-              name: s.$Name || s.StockName || "",
-              closingQty: Number(s.$ClosingBalance ?? s.ClosingQty ?? 0) || 0,
-              openingQty: Number(s.$OpeningBalance ?? s.OpeningQty ?? 0) || 0,
-              parent: s.$Parent || s.Category || "N/A",
-              price: Number(s.$ClosingRate ?? s.ClosingRate ?? 0) || 0,
-              batches: [],
-              totalQuantity: Number(s.ClosingQty ?? s.$ClosingBalance ?? 0) || 0,
-            }));
-            setItems(fallbackMapped);
-            setError(null);
-          } catch (err) {
-            setError(String("Failed to load stocks: " + msg));
-            setItems([]);
-          } finally {
-            setLoading(false);
-          }
-        } else {
-          console.error("Failed to fetch stocks:", err);
-          setError(msg || "Failed to load stocks");
+    try {
+      const res = await getStocksWithBatches(selected);
+      const rows = res && res.data ? res.data : [];
+      const mapped = rows.map((s: any) => ({
+        id: String(s.$Name || s.StockName || Math.random()),
+        name: s.$Name || s.StockName || "",
+        closingQty: Number(s.$ClosingBalance ?? s.ClosingQty ?? 0) || 0,
+        openingQty: Number(s.$OpeningBalance ?? s.OpeningQty ?? 0) || 0,
+        parent: s.$Parent || s.Category || "N/A",
+        price: Number(s.$ClosingRate ?? s.ClosingRate ?? 0) || 0,
+        batches: s.batches || [],
+        totalQuantity: s.totalQuantity ?? (Number(s.ClosingQty ?? s.$ClosingBalance ?? 0) || 0),
+      }));
+      setItems(mapped);
+      setLoading(false);
+    } catch (err) {
+      const msg = String((err as any)?.message || err);
+      const code = typeof (err as any)?.status === "number" ? (err as any).status : (msg.match(/(\d{3})/) ? Number(msg.match(/(\d{3})/)![1]) : null);
+      if (code) setErrorCode(code);
+      if (msg.includes("404")) {
+        try {
+          const res = await getCompanyStocks(selected);
+          const rows = res && res.data ? res.data : [];
+          const fallbackMapped = rows.map((s: any) => ({
+            id: String(s.$Name || s.StockName || Math.random()),
+            name: s.$Name || s.StockName || "",
+            closingQty: Number(s.$ClosingBalance ?? s.ClosingQty ?? 0) || 0,
+            openingQty: Number(s.$OpeningBalance ?? s.OpeningQty ?? 0) || 0,
+            parent: s.$Parent || s.Category || "N/A",
+            price: Number(s.$ClosingRate ?? s.ClosingRate ?? 0) || 0,
+            batches: [],
+            totalQuantity: Number(s.ClosingQty ?? s.$ClosingBalance ?? 0) || 0,
+          }));
+          setItems(fallbackMapped);
+          setError(null);
+        } catch {
+          setError(String("Failed to load stocks: " + msg));
           setItems([]);
+        } finally {
           setLoading(false);
         }
-      });
+      } else {
+        setError(msg || "Failed to load stocks");
+        setItems([]);
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchStocksMain();
   }, [selected]);
 
   useEffect(() => {
@@ -157,6 +159,7 @@ export default function StocksScreen() {
 
   return (
     <View style={styles.container}>
+      <ErrorModal visible={!!errorCode} status={errorCode ?? undefined} onClose={() => setErrorCode(null)} onRetry={() => { setErrorCode(null); fetchStocksMain(); }} />
       <Stack.Screen
         options={{
           title: "Stocks",

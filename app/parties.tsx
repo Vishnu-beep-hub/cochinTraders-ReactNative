@@ -1,7 +1,8 @@
 import CompanySelector from '@/components/CompanySelector';
+import ErrorModal from '@/components/ErrorModal';
 import { SkeletonLine } from '@/components/Skeleton';
-import ThemeToggle from '@/components/ThemeToggle';
 import { Text, View, useThemeColor } from '@/components/Themed';
+import ThemeToggle from '@/components/ThemeToggle';
 import { useCompany } from '@/context/CompanyContext';
 import { getCompanyParties } from '@/lib/api';
 import { Stack } from 'expo-router';
@@ -13,6 +14,7 @@ export default function PartiesScreen() {
   const [items, setItems] = useState<{ name: string }[]>([]);
   const { selected } = useCompany();
   const [loading, setLoading] = useState(false);
+  const [errorCode, setErrorCode] = useState<number | null>(null);
 
   useEffect(() => {
     if (!selected) return;
@@ -21,7 +23,11 @@ export default function PartiesScreen() {
       const rows = res && res.data ? res.data : [];
       const mapped = rows.map((s: any) => ({ name: s.$Name || s.Name || '' }));
       setItems(mapped);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch((err) => {
+      const msg = String(err?.message || err);
+      const code = typeof (err as any)?.status === 'number' ? (err as any).status : (msg.match(/(\d{3})/) ? Number(msg.match(/(\d{3})/)![1]) : null);
+      if (code) setErrorCode(code);
+    }).finally(() => setLoading(false));
   }, [selected]);
 
   const filtered = items.filter((i) => i.name.toLowerCase().includes(query.toLowerCase()));
@@ -31,6 +37,7 @@ export default function PartiesScreen() {
 
   return (
     <View style={styles.container}>
+      <ErrorModal visible={!!errorCode} status={errorCode ?? undefined} onClose={() => setErrorCode(null)} onRetry={() => { setErrorCode(null); setLoading(true); getCompanyParties(selected as string).then((res: any) => { const rows = res && res.data ? res.data : []; const mapped = rows.map((s: any) => ({ name: s.$Name || s.Name || '' })); setItems(mapped); }).catch(() => {}).finally(() => setLoading(false)); }} />
       <Stack.Screen options={{ 
         title: 'Parties',
         headerRight: () => (
