@@ -1,16 +1,15 @@
 // components/trader/PunchCard.tsx
-import ErrorModal from "@/components/ErrorModal";
 import ApiResponseMessage from "@/components/ApiResponseMessage";
+import ErrorModal from "@/components/ErrorModal";
 import { SkeletonLine } from "@/components/Skeleton";
 import { Text, TextInput, View, useThemeColor } from "@/components/Themed";
-import PunchSuccessModal from "@/components/trader/PunchSuccessModal";
 import ShopInput from "@/components/trader/ShopInput";
 import ShopSuggestions from "@/components/trader/ShopSuggestions";
+import { useCart } from "@/context/CartContext";
 import { useCompany } from "@/context/CompanyContext";
 import { getCompanyParties, submitPunchIn } from "@/lib/api";
 import React, { memo, useEffect, useState } from "react";
 import { Alert, StyleSheet, TouchableOpacity } from "react-native";
-import { useCart } from "@/context/CartContext";
 
 type Props = {
   employeeName?: string | null;
@@ -213,11 +212,11 @@ export default memo(function PunchCard({ employeeName, employeePhone }: Props) {
             styles.primaryButton,
             {
               backgroundColor: buttonPrimary,
-              opacity: submitting ? 0.6 : 1,
+              opacity: submitting || !amount.trim() ? 0.6 : 1,
             },
           ]}
           onPress={handlePress}
-          disabled={submitting}
+          disabled={submitting || !amount.trim()}
         >
           <Text style={styles.primaryButtonText}>
             {submitting ? "Submitting..." : "Punch In"}
