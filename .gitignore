@@ -46,3 +46,6 @@ coverage/
 metro-cache/
 # ngrok config (if kept in repo)
 ngrok.yml
+# Test files
+test-build/
+project.tar.gz
